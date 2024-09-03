@@ -15,5 +15,7 @@ namespace ASP_EFC.Models
         [Required]
         [Phone]
         public string PhoneNumber { get; set; }
+
+        public ICollection<Order> Orders { get; set; }
     }
 }
