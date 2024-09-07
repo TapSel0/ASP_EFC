@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ASP_EFC.Models;
+using System.Xml.Linq;
 
 namespace ASP_EFC.Controllers
 {
@@ -19,9 +20,43 @@ namespace ASP_EFC.Controllers
         }
 
         // GET: Customers
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string sortOrder)
         {
-            return View(await _context.Customers.ToListAsync());
+            ViewBag.CurrentSort = sortOrder;
+
+            //ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "NameDesc" : "";
+            //ViewData["EmailSortParm"] = sortOrder == "EmailAsc" ? "EmailDesc" : "EmailAsc";
+            //ViewData["PhoneSortParm"] = sortOrder == "PhoneAsc" ? "PhoneDesc" : "PhoneAsc";
+
+            var customers = from c in _context.Customers select c;
+
+            // Логика сортировки
+            switch (sortOrder)
+            {
+                case "NameDesc":
+                    customers = customers.OrderByDescending(c => c.Name);
+                    break;
+                case "NameAsc":
+                    customers = customers.OrderBy(c => c.Name);
+                    break;
+                case "EmailDesc":
+                    customers = customers.OrderByDescending(c => c.Email);
+                    break;
+                case "EmailAsc":
+                    customers = customers.OrderBy(c => c.Email);
+                    break;
+                case "PhoneDesc":
+                    customers = customers.OrderByDescending(c => c.PhoneNumber);
+                    break;
+                case "PhoneAsc":
+                    customers = customers.OrderBy(c => c.PhoneNumber);
+                    break;
+                default:
+                    customers = customers.OrderBy(c => c.Name);
+                    break;
+            }
+
+            return View(await customers.AsNoTracking().ToListAsync());
         }
 
         // GET: Customers/Details/5
@@ -62,7 +97,24 @@ namespace ASP_EFC.Controllers
                 return RedirectToAction(nameof(Index));
             }
             return View(customer);
-        }
+
+            //if (!ModelState.IsValid)
+            //{
+            //    // Вывод ошибок в консоль
+            //    foreach (var state in ModelState)
+            //    {
+            //        foreach (var error in state.Value.Errors)
+            //        {
+            //            Console.WriteLine($"Error in {state.Key}: {error.ErrorMessage}");
+            //        }
+            //    }
+            //return View(customer);
+        //     }
+
+        //_context.Add(customer);
+        //await _context.SaveChangesAsync();
+        //return RedirectToAction(nameof(Index));
+    }
 
         // GET: Customers/Edit/5
         public async Task<IActionResult> Edit(int? id)
@@ -152,5 +204,46 @@ namespace ASP_EFC.Controllers
         {
             return _context.Customers.Any(e => e.Id == id);
         }
+
+        // Example of filter
+        public async Task<IActionResult> FilteredCustomers(string name)
+        {
+            var filteredCustomers = await _context.Customers
+                .Where(c => c.Name.StartsWith(name))
+                .ToListAsync();
+
+            return View("Index", filteredCustomers);
+        }
+
+        // Example of sorting
+        public async Task<IActionResult> SortedCustomers()
+        {
+            var sortedCustomers = await _context.Customers
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+
+            return View("Index", sortedCustomers);
+        }
+
+        // Sampling with projection:
+        //    var customerNames = await context.Customers
+        //      .Select(c => c.Name)
+        //      .ToListAsync();
+
+        // Retrieving data using Include:
+        // var customersWithOrders = await context.Customers
+        //      .Include(c => c.Orders)
+        //      .ToListAsync();
+
+        //Performing data aggregation:
+        // var customerCount = await context.Customers.CountAsync();
+
+        // When you have nested collections, for example a customer has orders and orders have products, you need to use ThenInclude:
+        // var customersWithOrdersAndProducts = await context.Customers
+        //      .Include(c => c.Orders)
+        //      .ThenInclude(o => o.Products)
+        //      .ToListAsync();
+
+
     }
 }

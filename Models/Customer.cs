@@ -16,6 +16,6 @@ namespace ASP_EFC.Models
         [Phone]
         public string PhoneNumber { get; set; }
 
-        public ICollection<Order> Orders { get; set; }
+        public ICollection<Order>? Orders { get; set; }
     }
 }

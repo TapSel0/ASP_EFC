@@ -6,9 +6,20 @@
 
 <h1>Index</h1>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
+<div class="flex-container">
+    <a asp-action="Create" class="btn-link">Create New</a>
+    <form method="get" asp-action="Index">
+        <label for="sortOptions">Sort Customers by:</label>
+        <select name="sortOrder" id="sortOptions" onchange="this.form.submit()">
+            <option value="NameAsc" selected="@(ViewBag.CurrentSort == "NameAsc")">Name (A-Z)</option>
+            <option value="NameDesc" selected="@(ViewBag.CurrentSort == "NameDesc")">Name (Z-A)</option>
+            <option value="EmailAsc" selected="@(ViewBag.CurrentSort == "EmailAsc")">Email (A-Z)</option>
+            <option value="EmailDesc" selected="@(ViewBag.CurrentSort == "EmailDesc")">Email (Z-A)</option>
+            <option value="PhoneAsc" selected="@(ViewBag.CurrentSort == "PhoneAsc")">Phone (ascending)</option>
+            <option value="PhoneDesc" selected="@(ViewBag.CurrentSort == "PhoneDesc")">Phone (descending)</option>
+        </select>
+    </form>
+</div>
 <table class="table">
     <thead>
         <tr>
@@ -45,3 +56,47 @@
 }
     </tbody>
 </table>
+<div class="flex-container">
+    <a href="/Customers/FilteredCustomers?name=Joe" class="left-link">Show Customers Named Joe</a>
+    <a href="/Customers/SortedCustomers" class="right-link" >Show Sorted Customers</a>
+</div>
+
+
+<h2>Accordion with Links</h2>
+
+<div class="accordion">Section 1</div>
+<div class="panel">
+    <a>Link 1</a>
+    <a>Link 2</a>
+    <a>Link 3</a>
+</div>
+
+<div class="accordion">Section 2</div>
+<div class="panel">
+    <a>Link 4</a>
+    <a>Link 5</a>
+    <a>Link 6</a>
+</div>
+
+<div class="accordion">Section 3</div>
+<div class="panel">
+    <a>Link 7</a>
+    <a>Link 8</a>
+    <a>Link 9</a>
+</div>
+
+<script>
+    var acc = document.getElementsByClassName("accordion");
+    for (var i = 0; i < acc.length; i++) {
+        acc[i].addEventListener("click", function() {
+            this.classList.toggle("active");
+
+            var panel = this.nextElementSibling;
+            if (panel.style.maxHeight) {
+                panel.style.maxHeight = null;
+            } else {
+                panel.style.maxHeight = panel.scrollHeight + "px";
+            }
+        });
+    }
+</script>
