@@ -18,8 +18,9 @@ namespace ASP_EFC.Models
                 .HasForeignKey(o => o.CustomerId);
 
             modelBuilder.Entity<Order>()
-                .HasMany(o => o.Products)
-                .WithMany(p => p.Orders);
+                .HasOne(o => o.Product)
+                .WithMany(p => p.Orders)
+                .HasForeignKey(o => o.ProductId);
 
             modelBuilder.Entity<Customer>()
                 .HasMany(c => c.Orders)
@@ -27,6 +28,10 @@ namespace ASP_EFC.Models
                 .HasForeignKey(o => o.CustomerId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .IsRequired(false); // Указываем, что связь необязательна
+
+            modelBuilder.Entity<Product>()
+                .HasMany(p => p.Orders)
+                .WithOne(o => o.Product);
 
             base.OnModelCreating(modelBuilder);
 

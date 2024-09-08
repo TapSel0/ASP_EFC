@@ -56,7 +56,7 @@ namespace ASP_EFC.Controllers
                     break;
             }
 
-            return View(await customers.AsNoTracking().ToListAsync());
+            return View(await customers.AsNoTracking().Include(c => c.Orders).ToListAsync());
         }
 
         // GET: Customers/Details/5
@@ -110,7 +110,6 @@ namespace ASP_EFC.Controllers
             //    }
             //return View(customer);
         //     }
-
         //_context.Add(customer);
         //await _context.SaveChangesAsync();
         //return RedirectToAction(nameof(Index));
