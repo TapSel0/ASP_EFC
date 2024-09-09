@@ -57,7 +57,7 @@
                         @foreach (var order in item.Orders)
                         {
                             <li>
-                                Order ID: @order.Id, Date: @order.OrderDate, Total: @order.TotalAmount.ToString("F2")
+                                    Order ID: @order.Id, Product: @order.Product.Name, Total: @order.TotalAmount
                             </li>
                         }
                     </ul>
@@ -79,6 +79,7 @@
 <div class="flex-container">
     <a href="/Customers/FilteredCustomers?name=Joe" class="left-link">Show Customers Named Joe</a>
     <a href="/Customers/SortedCustomers" class="right-link" >Show Sorted Customers</a>
+    <a href="/Customers/FilterAmountOfOrders?amount=100" class="btn-link">Show filtered amount of orders</a>
 </div>
 
 

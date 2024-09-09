@@ -1,0 +1,28 @@
+﻿@model IEnumerable<ASP_EFC.Models.CustomerOrderViewModel>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Task1</h1>
+
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Customer Name</th>
+            <th>Product Name</th>
+            <th>Total Purchase Amount</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.CustomerName</td>
+                <td>@item.ProductName</td>
+                <td>@item.TotalPurchaseAmount.ToString("F2")</td> <!-- Отображение с двумя знаками после запятой -->
+            </tr>
+        }
+    </tbody>
+</table>

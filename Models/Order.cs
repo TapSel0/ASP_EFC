@@ -12,14 +12,14 @@ namespace ASP_EFC.Models
         public DateTime OrderDate { get; set; }
 
         [Required]
-        public decimal TotalAmount { get; set; }
+        public int TotalAmount { get; set; }
         [Required]
         public int CustomerId { get; set; }
-        public required Customer? Customer { get; set; }
+        public Customer? Customer { get; set; }
         [Required]
         public int ProductId { get; set; }
         
-        public required Product? Product { get; set; }
+        public Product? Product { get; set; }
 
     }
 }

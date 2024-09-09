@@ -56,7 +56,7 @@ namespace ASP_EFC.Controllers
                     break;
             }
 
-            return View(await customers.AsNoTracking().Include(c => c.Orders).ToListAsync());
+            return View(await customers.AsNoTracking().Include(c => c.Orders).ThenInclude(o => o.Product).ToListAsync());
         }
 
         // GET: Customers/Details/5
@@ -224,6 +224,20 @@ namespace ASP_EFC.Controllers
             return View("Index", sortedCustomers);
         }
 
+        public async Task<IActionResult> FilterAmountOfOrders(float amount)
+        {
+            var filteredCustomers = from c in _context.Customers
+                                    join o in _context.Orders on c.Id equals o.CustomerId
+                                    join p in _context.Products on o.ProductId equals p.Id
+                                    select new CustomerOrderViewModel
+                                    {
+                                        CustomerName = c.Name,
+                                        ProductName = p.Name,
+                                        TotalPurchaseAmount = o.TotalAmount * p.Price
+                                    };
+            return View(filteredCustomers.ToList());
+        }
+
         // Sampling with projection:
         //    var customerNames = await context.Customers
         //      .Select(c => c.Name)
@@ -242,7 +256,6 @@ namespace ASP_EFC.Controllers
         //      .Include(c => c.Orders)
         //      .ThenInclude(o => o.Products)
         //      .ToListAsync();
-
 
     }
 }
