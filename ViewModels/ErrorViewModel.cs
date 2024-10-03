@@ -1,4 +1,4 @@
-namespace ASP_EFC.Models
+namespace ASP_EFC.ViewModels
 {
     public class ErrorViewModel
     {

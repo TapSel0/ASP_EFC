@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ASP_EFC.Models;
+using ASP_EFC.ViewModels;
 using System.Xml.Linq;
 
 namespace ASP_EFC.Controllers
@@ -209,6 +210,8 @@ namespace ASP_EFC.Controllers
         {
             var filteredCustomers = await _context.Customers
                 .Where(c => c.Name.StartsWith(name))
+                .Include(c => c.Orders)
+                .ThenInclude(o => o.Product)
                 .ToListAsync();
 
             return View("Index", filteredCustomers);
@@ -224,18 +227,73 @@ namespace ASP_EFC.Controllers
             return View("Index", sortedCustomers);
         }
 
-        public async Task<IActionResult> FilterAmountOfOrders(float amount)
+        public IActionResult FilterAmountOfOrders(decimal amount)
         {
             var filteredCustomers = from c in _context.Customers
                                     join o in _context.Orders on c.Id equals o.CustomerId
                                     join p in _context.Products on o.ProductId equals p.Id
+                                    let totalPurchaseAmount = o.TotalAmount * p.Price
+                                    where totalPurchaseAmount > amount
                                     select new CustomerOrderViewModel
                                     {
                                         CustomerName = c.Name,
                                         ProductName = p.Name,
-                                        TotalPurchaseAmount = o.TotalAmount * p.Price
+                                        TotalPurchaseAmount = totalPurchaseAmount
                                     };
             return View(filteredCustomers.ToList());
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GroupedByOrders()
+        {
+            var customerOrders = _context.Orders
+                .Include(o => o.Product)
+                .GroupBy(o => o.CustomerId)
+                .Select(group => new
+                {
+                    CustomerId = group.Key,
+                    TotalPurchaseAmount = group.Sum(o => o.TotalAmount * o.Product.Price)
+                })
+                .ToList();
+            return View(customerOrders);
+        }
+
+
+        public async Task<IActionResult> FilterByTotalPrice()
+        {
+            var filteredCustomers = await _context.Customers
+                .Include(c => c.Orders)
+                .ThenInclude(o => o.Product)
+                .Where(c => c.Orders.Sum(o => o.TotalAmount * o.Product.Price) < 500)
+                .ToListAsync();
+            
+            return View("Index", filteredCustomers);
+
+        }
+
+        public async Task<IActionResult> FilterByOrdersDate()
+        {
+            var customersWithOrdersThisMonth = await _context.Customers
+                .Include(c => c.Orders)
+                .ThenInclude(o => o.Product)
+                .Where(c => c.Orders.Any(o => o.OrderDate.Month == DateTime.Now.Month && o.OrderDate.Year == DateTime.Now.Year))
+                .ToListAsync();
+            return View("Index", customersWithOrdersThisMonth);
+
+        }
+
+
+        public async Task<IActionResult> GroupBy5Orders()
+        {
+            var customersWith5Orders = await _context.Customers
+                .Include(c => c.Orders)
+                .ThenInclude(o => o.Product)
+                .Where(c => c.Orders.Count >= 5)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return View("Index", customersWith5Orders);
+
         }
 
         // Sampling with projection:

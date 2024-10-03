@@ -8,6 +8,7 @@
 
 <div class="flex-container">
     <a asp-action="Create" class="btn-link">Create New</a>
+    <a href="/Customers/Index" class="btn-link">Show all</a>
     <form method="get" asp-action="Index">
         <label for="sortOptions">Sort Customers by:</label>
         <select name="sortOrder" id="sortOptions" onchange="this.form.submit()">
@@ -73,29 +74,24 @@
                 <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
             </td>
         </tr>
-}
+    }
     </tbody>
 </table>
-<div class="flex-container">
-    <a href="/Customers/FilteredCustomers?name=Joe" class="left-link">Show Customers Named Joe</a>
-    <a href="/Customers/SortedCustomers" class="right-link" >Show Sorted Customers</a>
-    <a href="/Customers/FilterAmountOfOrders?amount=100" class="btn-link">Show filtered amount of orders</a>
-</div>
 
 
 <h2>Accordion with Links</h2>
 
-<div class="accordion">Section 1</div>
+<div class="accordion">LINQ</div>
 <div class="panel">
-    <a>Link 1</a>
-    <a>Link 2</a>
-    <a>Link 3</a>
+    <a href="/Customers/FilteredCustomers?name=Joe">Show Customers Named Joe</a>
+    <a href="/Customers/FilterAmountOfOrders?amount=100">Show customers orders with total purchase >100</a>
+    <a href="/Customers/FilterByTotalPrice">Show customers with total orders price below 500</a>
 </div>
 
 <div class="accordion">Section 2</div>
 <div class="panel">
-    <a>Link 4</a>
-    <a>Link 5</a>
+    <a href="/Customers/FilterByOrdersDate">Show customers with orders in current mounth</a>
+    <a href="/Customers/GroupBy5Orders">Show customers with 5 or more orders</a>
     <a>Link 6</a>
 </div>
 

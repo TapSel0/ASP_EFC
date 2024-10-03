@@ -1,11 +1,14 @@
-﻿@model IEnumerable<ASP_EFC.Models.CustomerOrderViewModel>
+﻿@model IEnumerable<ASP_EFC.ViewModels.CustomerOrderViewModel>
 
 @{
     ViewData["Title"] = "Index";
 }
 
-<h1>Task1</h1>
-
+<h1>Total orders</h1>
+<div class="flex-container">
+    <a asp-action="Create" class="btn-link">Create New</a>
+    <a href="/Customers/Index" class="btn-link">Show all</a>
+</div>
 
 <table class="table">
     <thead>
@@ -21,8 +24,47 @@
             <tr>
                 <td>@item.CustomerName</td>
                 <td>@item.ProductName</td>
-                <td>@item.TotalPurchaseAmount.ToString("F2")</td> <!-- Отображение с двумя знаками после запятой -->
+                <td>@item.TotalPurchaseAmount.ToString("F2")</td>
             </tr>
         }
     </tbody>
 </table>
+
+<h2>Accordion with Links</h2>
+
+<div class="accordion">LINQ</div>
+<div class="panel">
+    <a href="/Customers/FilteredCustomers?name=Joe">Show Customers Named Joe</a>
+    <a href="/Customers/FilterAmountOfOrders?amount=100">Show customers orders with total purchase >100</a>
+    <a href="/Customers/FilterByTotalPrice">Show customers with total orders price below 500</a>
+</div>
+
+<div class="accordion">Section 2</div>
+<div class="panel">
+    <a href="/Customers/FilterByOrdersDate">Show customers with orders in current mounth</a>
+    <a href="/Customers/GroupBy5Orders">Show customers with 5 or more orders</a>
+    <a>Link 6</a>
+</div>
+
+<div class="accordion">Section 3</div>
+<div class="panel">
+    <a>Link 7</a>
+    <a>Link 8</a>
+    <a>Link 9</a>
+</div>
+
+<script>
+    var acc = document.getElementsByClassName("accordion");
+    for (var i = 0; i < acc.length; i++) {
+        acc[i].addEventListener("click", function () {
+            this.classList.toggle("active");
+
+            var panel = this.nextElementSibling;
+            if (panel.style.maxHeight) {
+                panel.style.maxHeight = null;
+            } else {
+                panel.style.maxHeight = panel.scrollHeight + "px";
+            }
+        });
+    }
+</script>
