@@ -27,22 +27,13 @@ namespace ASP_EFC.Models
                 .WithOne(o => o.Customer)
                 .HasForeignKey(o => o.CustomerId)
                 .OnDelete(DeleteBehavior.Cascade)
-                .IsRequired(false); // Указываем, что связь необязательна
+                .IsRequired(false);
 
             modelBuilder.Entity<Product>()
                 .HasMany(p => p.Orders)
                 .WithOne(o => o.Product);
 
             base.OnModelCreating(modelBuilder);
-
-            //modelBuilder.Entity<Customer>().HasData(
-            //    new Customer { Id = 2, Email = "joe.boo@example.com", Name = "Joe Boodoosh", PhoneNumber = "154135135234" }
-            //    );
-
-            //modelBuilder.Entity<Product>().HasData(
-            //    new Product { Id = 1, Name = "Potato", Price = 12.22m },
-            //    new Product { Id = 2, Name = "Headphones", Price = 43.00m }
-            //    );
         }
 
 

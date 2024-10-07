@@ -49,8 +49,6 @@ namespace ASP_EFC.Controllers
         }
 
         // POST: Products/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Name,Price")] Product product)
@@ -59,8 +57,10 @@ namespace ASP_EFC.Controllers
             {
                 _context.Add(product);
                 await _context.SaveChangesAsync();
+
                 return RedirectToAction(nameof(Index));
             }
+
             return View(product);
         }
 
@@ -77,12 +77,11 @@ namespace ASP_EFC.Controllers
             {
                 return NotFound();
             }
+
             return View(product);
         }
 
         // POST: Products/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Price")] Product product)
@@ -94,24 +93,9 @@ namespace ASP_EFC.Controllers
 
             if (ModelState.IsValid)
             {
-                try
-                {
-                    _context.Update(product);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ProductExists(product.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                return await ProductContexUpdateWithRedirectToAction(product);
             }
+
             return View(product);
         }
 
@@ -145,12 +129,35 @@ namespace ASP_EFC.Controllers
             }
 
             await _context.SaveChangesAsync();
+
             return RedirectToAction(nameof(Index));
         }
 
         private bool ProductExists(int id)
         {
             return _context.Products.Any(e => e.Id == id);
+        }
+
+        private async Task<IActionResult> ProductContexUpdateWithRedirectToAction(Product product)
+        {
+            try
+            {
+                _context.Update(product);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ProductExists(product.Id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw new Exception($"Product with Id = {product.Id} not found");
+                }
+            }
+
+            return RedirectToAction(nameof(Index));
         }
     }
 }

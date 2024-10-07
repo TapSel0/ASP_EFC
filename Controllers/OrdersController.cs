@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ASP_EFC.Models;
+using System.Reflection.Metadata;
+using ASP_EFC.Helpers;
 
 namespace ASP_EFC.Controllers
 {
@@ -22,6 +24,7 @@ namespace ASP_EFC.Controllers
         public async Task<IActionResult> Index()
         {
             var applicationDbContext = _context.Orders.Include(o => o.Customer).Include(o => o.Product);
+
             return View(await applicationDbContext.ToListAsync());
         }
 
@@ -48,26 +51,22 @@ namespace ASP_EFC.Controllers
         // GET: Orders/Create
         public IActionResult Create()
         {
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "Id", "Name");
-            ViewData["ProductId"] = new SelectList(_context.Products, "Id", "Name");
+            ViewData[Constants.CustomerId] = new SelectList(_context.Customers, "Id", "Name");
+            ViewData[Constants.ProductId] = new SelectList(_context.Products, "Id", "Name");
+
             return View();
         }
 
         // POST: Orders/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,OrderDate,TotalAmount,CustomerId,ProductId")] Order order)
         {
             var customer = await _context.Customers.FindAsync(order.CustomerId);
-            if (customer != null)
+            var product = await _context.Products.FindAsync(order.ProductId);
+            if (customer != null && product != null)
             {
                 order.Customer = customer;
-            }
-            var product = await _context.Products.FindAsync(order.ProductId);
-            if (product != null)
-            {
                 order.Product = product;
             }
 
@@ -75,8 +74,10 @@ namespace ASP_EFC.Controllers
             {
                 _context.Add(order);
                 await _context.SaveChangesAsync();
+
                 return RedirectToAction(nameof(Index));
             }
+
             // Вывод ошибок в консоль
             foreach (var state in ModelState)
             {
@@ -85,8 +86,10 @@ namespace ASP_EFC.Controllers
                     Console.WriteLine($"Error in {state.Key}: {error.ErrorMessage}");
                 }
             }
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "Id", "Email", order.CustomerId);
-            ViewData["ProductId"] = new SelectList(_context.Products, "Id", "Name", order.ProductId);
+
+            ViewData[Constants.CustomerId] = new SelectList(_context.Customers, "Id", "Email", order.CustomerId);
+            ViewData[Constants.ProductId] = new SelectList(_context.Products, "Id", "Name", order.ProductId);
+
             return View(order);
         }
 
@@ -103,14 +106,13 @@ namespace ASP_EFC.Controllers
             {
                 return NotFound();
             }
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "Id", "Email", order.CustomerId);
-            ViewData["ProductId"] = new SelectList(_context.Products, "Id", "Name", order.ProductId);
+            ViewData[Constants.CustomerId] = new SelectList(_context.Customers, "Id", "Email", order.CustomerId);
+            ViewData[Constants.ProductId] = new SelectList(_context.Products, "Id", "Name", order.ProductId);
+
             return View(order);
         }
 
         // POST: Orders/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,OrderDate,TotalAmount,CustomerId,ProductId")] Order order)
@@ -119,31 +121,18 @@ namespace ASP_EFC.Controllers
             {
                 return NotFound();
             }
-
             if (ModelState.IsValid)
             {
-                try
-                {
-                    _context.Update(order);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!OrderExists(order.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                return await OrderContexUpdateWithRedirectToAction(order);
             }
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "Id", "Email", order.CustomerId);
-            ViewData["ProductId"] = new SelectList(_context.Products, "Id", "Name", order.ProductId);
+           
+            ViewData[Constants.CustomerId] = new SelectList(_context.Customers, "Id", "Email", order.CustomerId);
+            ViewData[Constants.ProductId] = new SelectList(_context.Products, "Id", "Name", order.ProductId);
+
             return View(order);
         }
+
+
 
         // GET: Orders/Delete/5
         public async Task<IActionResult> Delete(int? id)
@@ -177,12 +166,37 @@ namespace ASP_EFC.Controllers
             }
 
             await _context.SaveChangesAsync();
+
             return RedirectToAction(nameof(Index));
         }
 
         private bool OrderExists(int id)
         {
             return _context.Orders.Any(e => e.Id == id);
+        }
+
+        private async Task<IActionResult> OrderContexUpdateWithRedirectToAction(Order order)
+        {
+
+            try
+            {
+                _context.Update(order);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!OrderExists(order.Id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw new Exception($"Order with Id = {order.Id} not found");
+                }
+            }
+
+            return RedirectToAction(nameof(Index));
+
         }
     }
 }

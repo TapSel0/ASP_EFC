@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using ASP_EFC.Models;
 using ASP_EFC.ViewModels;
 using System.Xml.Linq;
+using Microsoft.AspNetCore.Identity;
 
 namespace ASP_EFC.Controllers
 {
@@ -24,10 +25,6 @@ namespace ASP_EFC.Controllers
         public async Task<IActionResult> Index(string sortOrder)
         {
             ViewBag.CurrentSort = sortOrder;
-
-            //ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "NameDesc" : "";
-            //ViewData["EmailSortParm"] = sortOrder == "EmailAsc" ? "EmailDesc" : "EmailAsc";
-            //ViewData["PhoneSortParm"] = sortOrder == "PhoneAsc" ? "PhoneDesc" : "PhoneAsc";
 
             var customers = from c in _context.Customers select c;
 
@@ -70,6 +67,7 @@ namespace ASP_EFC.Controllers
 
             var customer = await _context.Customers
                 .FirstOrDefaultAsync(m => m.Id == id);
+
             if (customer == null)
             {
                 return NotFound();
@@ -85,8 +83,6 @@ namespace ASP_EFC.Controllers
         }
 
         // POST: Customers/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Name,Email,PhoneNumber")] Customer customer)
@@ -97,23 +93,8 @@ namespace ASP_EFC.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(customer);
 
-            //if (!ModelState.IsValid)
-            //{
-            //    // Вывод ошибок в консоль
-            //    foreach (var state in ModelState)
-            //    {
-            //        foreach (var error in state.Value.Errors)
-            //        {
-            //            Console.WriteLine($"Error in {state.Key}: {error.ErrorMessage}");
-            //        }
-            //    }
-            //return View(customer);
-        //     }
-        //_context.Add(customer);
-        //await _context.SaveChangesAsync();
-        //return RedirectToAction(nameof(Index));
+            return View(customer);
     }
 
         // GET: Customers/Edit/5
@@ -129,12 +110,11 @@ namespace ASP_EFC.Controllers
             {
                 return NotFound();
             }
+
             return View(customer);
         }
 
         // POST: Customers/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Email,PhoneNumber")] Customer customer)
@@ -146,24 +126,9 @@ namespace ASP_EFC.Controllers
 
             if (ModelState.IsValid)
             {
-                try
-                {
-                    _context.Update(customer);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!CustomerExists(customer.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                return await CustomerContexUpdateWithRedirectToAction(customer);
             }
+
             return View(customer);
         }
 
@@ -197,6 +162,7 @@ namespace ASP_EFC.Controllers
             }
 
             await _context.SaveChangesAsync();
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -229,18 +195,25 @@ namespace ASP_EFC.Controllers
 
         public IActionResult FilterAmountOfOrders(decimal amount)
         {
-            var filteredCustomers = from c in _context.Customers
-                                    join o in _context.Orders on c.Id equals o.CustomerId
-                                    join p in _context.Products on o.ProductId equals p.Id
-                                    let totalPurchaseAmount = o.TotalAmount * p.Price
-                                    where totalPurchaseAmount > amount
-                                    select new CustomerOrderViewModel
-                                    {
-                                        CustomerName = c.Name,
-                                        ProductName = p.Name,
-                                        TotalPurchaseAmount = totalPurchaseAmount
-                                    };
-            return View(filteredCustomers.ToList());
+            var filteredCustomers = _context.Customers
+                .Join(_context.Orders, c => c.Id, o => o.CustomerId, (c, o) => new { c, o })
+                .Join(_context.Products, co => co.o.ProductId, p => p.Id, (co, p) => new
+                {
+                    co.c,
+                    co.o,
+                    Product = p,
+                    TotalPurchaseAmount = co.o.TotalAmount * p.Price
+                })
+                .Where(result => result.TotalPurchaseAmount > amount)
+                .Select(result => new CustomerOrderViewModel
+                {
+                    CustomerName = result.c.Name,
+                    ProductName = result.Product.Name,
+                    TotalPurchaseAmount = result.TotalPurchaseAmount
+                })
+                .ToList();
+
+            return View(filteredCustomers);
         }
 
         [HttpGet]
@@ -255,6 +228,7 @@ namespace ASP_EFC.Controllers
                     TotalPurchaseAmount = group.Sum(o => o.TotalAmount * o.Product.Price)
                 })
                 .ToList();
+
             return View(customerOrders);
         }
 
@@ -268,7 +242,6 @@ namespace ASP_EFC.Controllers
                 .ToListAsync();
             
             return View("Index", filteredCustomers);
-
         }
 
         public async Task<IActionResult> FilterByOrdersDate()
@@ -278,8 +251,8 @@ namespace ASP_EFC.Controllers
                 .ThenInclude(o => o.Product)
                 .Where(c => c.Orders.Any(o => o.OrderDate.Month == DateTime.Now.Month && o.OrderDate.Year == DateTime.Now.Year))
                 .ToListAsync();
-            return View("Index", customersWithOrdersThisMonth);
 
+            return View("Index", customersWithOrdersThisMonth);
         }
 
 
@@ -293,27 +266,28 @@ namespace ASP_EFC.Controllers
                 .ToListAsync();
 
             return View("Index", customersWith5Orders);
-
         }
 
-        // Sampling with projection:
-        //    var customerNames = await context.Customers
-        //      .Select(c => c.Name)
-        //      .ToListAsync();
-
-        // Retrieving data using Include:
-        // var customersWithOrders = await context.Customers
-        //      .Include(c => c.Orders)
-        //      .ToListAsync();
-
-        //Performing data aggregation:
-        // var customerCount = await context.Customers.CountAsync();
-
-        // When you have nested collections, for example a customer has orders and orders have products, you need to use ThenInclude:
-        // var customersWithOrdersAndProducts = await context.Customers
-        //      .Include(c => c.Orders)
-        //      .ThenInclude(o => o.Products)
-        //      .ToListAsync();
+        private async Task<IActionResult> CustomerContexUpdateWithRedirectToAction(Customer customer)
+        {
+            try
+            {
+                _context.Update(customer);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!CustomerExists(customer.Id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw new Exception($"Customer with Id = {customer.Id} not found");
+                }
+            }
+            return RedirectToAction(nameof(Index));
+        }
 
     }
 }
